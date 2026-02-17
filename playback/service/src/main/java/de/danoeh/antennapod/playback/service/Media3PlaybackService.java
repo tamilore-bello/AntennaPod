@@ -266,9 +266,11 @@ public class Media3PlaybackService extends MediaLibraryService {
 
     private void ensureCurrentMediaLoaded() {
         if (player == null || player.getCurrentMediaItem() == null) {
+            System.out.println("1 NULL PLAYER HERE:");
             return;
         }
         try {
+            System.out.println("1 PROCEEDING:");
             long mediaId = Long.parseLong(player.getCurrentMediaItem().mediaId);
             if (currentPlayable == null || currentPlayable.getId() != mediaId) {
                 if (mediaLoaderDisposable != null) {
@@ -412,6 +414,9 @@ public class Media3PlaybackService extends MediaLibraryService {
             return;
         }
         queueLoaderDisposable = Single.fromCallable(() -> {
+            System.out.println("PROCEEDING 2:");
+            // TODO THE ISSUE IS THAT WHEN THE LAST EP IS PLAYED THIS IS TH
+            // ROWING NULL WHICH IT ISN'T ALLOWED TO DO BY DEF.
             FeedItem nextItem = DBReader.getNextInQueue(item);
             return nextItem != null && nextItem.getMedia() != null ? nextItem.getMedia() : null;
         })

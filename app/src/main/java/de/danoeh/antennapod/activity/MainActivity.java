@@ -366,9 +366,11 @@ public class MainActivity extends CastEnabledActivity {
         setPlayerVisible(findViewById(R.id.audioplayerFragment).getVisibility() == View.VISIBLE);
     }
 
+    // TODO NOTE FOR ANZUKI. this is where we see if the miniplayer is visible or not.
     public void setPlayerVisible(boolean visible) {
         getBottomSheet().setLocked(!visible);
         findViewById(R.id.audioplayerFragment).setVisibility(visible ? View.VISIBLE : View.GONE);
+
         if (visible) {
             bottomSheetCallback.onStateChanged(null, getBottomSheet().getState()); // Update toolbar visibility
         } else {
