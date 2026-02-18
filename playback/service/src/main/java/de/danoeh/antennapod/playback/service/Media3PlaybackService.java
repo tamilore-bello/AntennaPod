@@ -436,18 +436,12 @@ public class Media3PlaybackService extends MediaLibraryService {
                         },
                         error -> Log.e(TAG, "Failed to load next queue item", error),
                         () ->  {
-                            stopPlayerAtQueueEnd();
-                            stopSelf();
-                            Log.e(TAG, "End of queue, stopping self and triggering self-destruction");
+                            player.stop();
+                            player.clearMediaItems();
+                            PlaybackPreferences.writeNoMediaPlaying();
+                            PlaybackPreferences.setCurrentPlayerStatus(-1);
+                            EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
                         }
                 );
-    }
-
-    private static void stopPlayerAtQueueEnd() {
-        Log.e(TAG, "Record that no media is playing next, and post the event that the service has shut down");
-
-        PlaybackPreferences.writeNoMediaPlaying();
-        PlaybackPreferences.setCurrentPlayerStatus(-1);
-        EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
     }
 }

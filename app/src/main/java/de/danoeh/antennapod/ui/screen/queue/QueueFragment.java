@@ -308,7 +308,6 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                         DialogInterface dialog) {
                     dialog.dismiss();
                     DBWriter.clearQueue();
-                    EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
                 }
             };
             conDialog.createNewDialog().show();
