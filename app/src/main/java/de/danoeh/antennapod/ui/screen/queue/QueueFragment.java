@@ -303,7 +303,6 @@ public class QueueFragment extends Fragment implements MaterialToolbar.OnMenuIte
                     R.string.clear_queue_label,
                     R.string.clear_queue_confirmation_msg) {
 
-                // TODO here is where we also wanna make sure the minibar is dismissed.
                 @Override
                 public void onConfirmButtonPressed(
                         DialogInterface dialog) {
