@@ -296,20 +296,20 @@ public class Media3PlaybackService extends MediaLibraryService {
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(media -> {
                             currentPlayable = media;
-                                if (player != null) {
-                                    currentPlayable.setPosition((int) player.getCurrentPosition());
-                                }
-                                currentPlayable.onPlaybackStart();
-                                if (currentPlayable.getItem() != null
+                            if (player != null) {
+                                currentPlayable.setPosition((int) player.getCurrentPosition());
+                            }
+                            currentPlayable.onPlaybackStart();
+                            if (currentPlayable.getItem() != null
                                         && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
-                                    DBWriter.addQueueItem(this, currentPlayable.getItem());
-                                }
-                                float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
-                                if (player != null) {
-                                    player.setPlaybackSpeed(speed);
-                                }
-                                updatePlaybackPreferences();
-                                EventBus.getDefault().post(new PlayerStatusEvent());
+                                DBWriter.addQueueItem(this, currentPlayable.getItem());
+                            }
+                            float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
+                            if (player != null) {
+                                player.setPlaybackSpeed(speed);
+                            }
+                            updatePlaybackPreferences();
+                            EventBus.getDefault().post(new PlayerStatusEvent());
                             },
                             error -> Log.e(TAG, "Failed to load current media", error));
 
