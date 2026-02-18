@@ -33,7 +33,6 @@ import de.danoeh.antennapod.net.common.NetworkUtils;
 import de.danoeh.antennapod.net.sync.serviceinterface.SynchronizationQueue;
 import de.danoeh.antennapod.playback.cast.CastPlayerWrapper;
 import de.danoeh.antennapod.playback.base.MediaItemAdapter;
-import de.danoeh.antennapod.playback.base.PlayerStatus;
 import de.danoeh.antennapod.playback.service.internal.MediaLibrarySessionCallback;
 import de.danoeh.antennapod.playback.service.internal.PlayableUtils;
 import de.danoeh.antennapod.storage.database.DBReader;
@@ -42,13 +41,14 @@ import de.danoeh.antennapod.storage.preferences.PlaybackPreferences;
 import de.danoeh.antennapod.storage.preferences.UserPreferences;
 import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.episodes.PlaybackSpeedUtils;
+import de.danoeh.antennapod.event.playback.PlaybackServiceEvent;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
-import de.danoeh.antennapod.ui.widget.WidgetUpdater;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
+import io.reactivex.rxjava3.core.Maybe;
 import org.greenrobot.eventbus.EventBus;
 
 import java.util.List;
@@ -169,11 +169,6 @@ public class Media3PlaybackService extends MediaLibraryService {
                     SynchronizationQueue.getInstance().enqueueEpisodePlayed(currentPlayable, false);
                 }
             }
-            WidgetUpdater.WidgetState widgetState = new WidgetUpdater.WidgetState(currentPlayable,
-                    PlaybackService.isRunning ? PlayerStatus.PLAYING : PlayerStatus.PAUSED,
-                    (int) player.getContentPosition(), (int) player.getDuration(),
-                    player.getPlaybackParameters().speed);
-            WidgetUpdater.updateWidget(Media3PlaybackService.this, widgetState);
             updatePlaybackPreferences();
             EventBus.getDefault().post(new PlayerStatusEvent());
         }
@@ -249,22 +244,17 @@ public class Media3PlaybackService extends MediaLibraryService {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
                         ignored -> {
-                            if (currentPlayable == null || player == null) {
-                                return;
-                            }
-                            long position = player.getCurrentPosition();
-                            long duration = player.getDuration();
-                            if (duration > 0) {
-                                EventBus.getDefault().post(
-                                        new PlaybackPositionEvent((int) position, (int) duration));
-                                WidgetUpdater.WidgetState widgetState = new WidgetUpdater.WidgetState(currentPlayable,
-                                        Util.shouldShowPlayButton(player) ? PlayerStatus.PAUSED : PlayerStatus.PLAYING,
-                                        (int) position, (int) duration, player.getPlaybackParameters().speed);
-                                WidgetUpdater.updateWidget(this, widgetState);
-                                long currentTime = System.currentTimeMillis();
-                                if (currentTime - lastPositionSaveTime >= POSITION_SAVE_INTERVAL_MS) {
-                                    saveCurrentPosition();
-                                    lastPositionSaveTime = currentTime;
+                            if (currentPlayable != null && player != null) {
+                                long position = player.getCurrentPosition();
+                                long duration = player.getDuration();
+                                if (duration > 0) {
+                                    EventBus.getDefault().post(
+                                            new PlaybackPositionEvent((int) position, (int) duration));
+                                    long currentTime = System.currentTimeMillis();
+                                    if (currentTime - lastPositionSaveTime >= POSITION_SAVE_INTERVAL_MS) {
+                                        saveCurrentPosition();
+                                        lastPositionSaveTime = currentTime;
+                                    }
                                 }
                             }
                         }, error -> Log.e(TAG, "Position observer error", error)
@@ -288,27 +278,27 @@ public class Media3PlaybackService extends MediaLibraryService {
                 if (mediaLoaderDisposable != null) {
                     mediaLoaderDisposable.dispose();
                 }
-                mediaLoaderDisposable = Single.fromCallable(() ->
+                mediaLoaderDisposable = Maybe.fromCallable(() ->
                                 DBReader.getFeedMedia(mediaId))
                         .subscribeOn(Schedulers.io())
                         .observeOn(AndroidSchedulers.mainThread())
                         .subscribe(media -> {
-                            currentPlayable = media;
-                            if (player != null) {
-                                currentPlayable.setPosition((int) player.getCurrentPosition());
-                            }
-                            currentPlayable.onPlaybackStart();
-                            if (currentPlayable.getItem() != null
-                                    && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
-                                DBWriter.addQueueItem(this, currentPlayable.getItem());
-                            }
-                            float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
-                            if (player != null) {
-                                player.setPlaybackSpeed(speed);
-                            }
-                            updatePlaybackPreferences();
-                            EventBus.getDefault().post(new PlayerStatusEvent());
-                        },
+                                    currentPlayable = media;
+                                    if (player != null) {
+                                        currentPlayable.setPosition((int) player.getCurrentPosition());
+                                    }
+                                    currentPlayable.onPlaybackStart();
+                                    if (currentPlayable.getItem() != null
+                                            && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
+                                        DBWriter.addQueueItem(this, currentPlayable.getItem());
+                                    }
+                                    float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
+                                    if (player != null) {
+                                        player.setPlaybackSpeed(speed);
+                                    }
+                                    updatePlaybackPreferences();
+                                    EventBus.getDefault().post(new PlayerStatusEvent());
+                                },
                                 error -> Log.e(TAG, "Failed to load current media", error));
 
             }
@@ -425,10 +415,10 @@ public class Media3PlaybackService extends MediaLibraryService {
         if (item == null) {
             return;
         }
-        queueLoaderDisposable = Single.fromCallable(() -> {
-            FeedItem nextItem = DBReader.getNextInQueue(item);
-            return nextItem != null && nextItem.getMedia() != null ? nextItem.getMedia() : null;
-        })
+        queueLoaderDisposable = Maybe.fromCallable(() -> {
+                    FeedItem nextItem = DBReader.getNextInQueue(item);
+                    return nextItem != null && nextItem.getMedia() != null ? nextItem.getMedia() : null;
+                })
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(
@@ -444,7 +434,20 @@ public class Media3PlaybackService extends MediaLibraryService {
                                 player.prepare();
                             }
                         },
-                        error -> Log.e(TAG, "Failed to load next queue item", error)
+                        error -> Log.e(TAG, "Failed to load next queue item", error),
+                        () ->  {
+                            stopPlayerAtQueueEnd();
+                            stopSelf();
+                            Log.e(TAG, "End of queue, stopping self and triggering self-destruction");
+                        }
                 );
+    }
+
+    private static void stopPlayerAtQueueEnd() {
+        Log.e(TAG, "Record that no media is playing next, and post the event that the service has shut down");
+
+        PlaybackPreferences.writeNoMediaPlaying();
+        PlaybackPreferences.setCurrentPlayerStatus(-1);
+        EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
     }
 }
