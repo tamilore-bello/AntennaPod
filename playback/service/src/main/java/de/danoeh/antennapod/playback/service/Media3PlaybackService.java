@@ -233,7 +233,6 @@ public class Media3PlaybackService extends MediaLibraryService {
         super.onDestroy();
     }
 
-
     private void setupPositionObserver() {
         if (positionObserverDisposable != null) {
             positionObserverDisposable.dispose();
@@ -444,9 +443,6 @@ public class Media3PlaybackService extends MediaLibraryService {
     
     private static void stopPlayerAtQueueEnd() {
         Log.e(TAG, "Clearing the queue, setting the current feed and media to none, and noting that continuous playback is ending.");
-        DBWriter.clearQueue();
-        DBWriter.setFeedItem(null);
-        DBWriter.setFeedMedia(null);
         PlaybackPreferences.writeNoMediaPlaying();
         PlaybackPreferences.setCurrentPlayerStatus(-1);
         EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));

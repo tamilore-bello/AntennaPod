@@ -369,7 +369,6 @@ public class MainActivity extends CastEnabledActivity {
     public void setPlayerVisible(boolean visible) {
         getBottomSheet().setLocked(!visible);
         findViewById(R.id.audioplayerFragment).setVisibility(visible ? View.VISIBLE : View.GONE);
-
         if (visible) {
             bottomSheetCallback.onStateChanged(null, getBottomSheet().getState()); // Update toolbar visibility
         } else {
@@ -776,7 +775,7 @@ public class MainActivity extends CastEnabledActivity {
                 break;
         }
     }
-  
+
     //Hardware keyboard support
     @Override
     public boolean onKeyUp(int keyCode, KeyEvent event) {

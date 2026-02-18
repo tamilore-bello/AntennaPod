@@ -162,8 +162,8 @@ public class DBWriter {
             if (media.getItem().getFeed().getState() != Feed.STATE_NOT_SUBSCRIBED) {
                 SynchronizationQueue.getInstance().enqueueEpisodeAction(
                         new EpisodeAction.Builder(media.getItem(), EpisodeAction.DELETE)
-                            .currentTimestamp()
-                            .build());
+                                .currentTimestamp()
+                                .build());
             }
 
             EventBus.getDefault().post(FeedItemEvent.updated(media.getItem()));
@@ -462,6 +462,7 @@ public class DBWriter {
             adapter.open();
             adapter.clearQueue();
             adapter.close();
+
             EventBus.getDefault().post(QueueEvent.cleared());
         });
     }
