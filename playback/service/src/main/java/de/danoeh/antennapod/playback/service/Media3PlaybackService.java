@@ -310,7 +310,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                             }
                             updatePlaybackPreferences();
                             EventBus.getDefault().post(new PlayerStatusEvent());
-                            },
+                        },
                             error -> Log.e(TAG, "Failed to load current media", error));
 
             }
