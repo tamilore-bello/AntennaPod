@@ -462,7 +462,6 @@ public class DBWriter {
             adapter.open();
             adapter.clearQueue();
             adapter.close();
-
             EventBus.getDefault().post(QueueEvent.cleared());
         });
     }

@@ -25,6 +25,7 @@ import de.danoeh.antennapod.event.PlayerErrorEvent;
 import de.danoeh.antennapod.event.PlayerStatusEvent;
 import de.danoeh.antennapod.event.playback.BufferUpdateEvent;
 import de.danoeh.antennapod.event.playback.PlaybackPositionEvent;
+import de.danoeh.antennapod.event.playback.PlaybackServiceEvent;
 import de.danoeh.antennapod.event.playback.SpeedChangedEvent;
 import de.danoeh.antennapod.model.feed.Chapter;
 import de.danoeh.antennapod.model.feed.FeedItem;
@@ -42,6 +43,7 @@ import de.danoeh.antennapod.ui.appstartintent.MainActivityStarter;
 import de.danoeh.antennapod.ui.episodes.PlaybackSpeedUtils;
 import de.danoeh.antennapod.ui.notifications.NotificationUtils;
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
+import io.reactivex.rxjava3.core.Maybe;
 import io.reactivex.rxjava3.core.Observable;
 import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
@@ -231,6 +233,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         super.onDestroy();
     }
 
+
     private void setupPositionObserver() {
         if (positionObserverDisposable != null) {
             positionObserverDisposable.dispose();
@@ -266,11 +269,9 @@ public class Media3PlaybackService extends MediaLibraryService {
 
     private void ensureCurrentMediaLoaded() {
         if (player == null || player.getCurrentMediaItem() == null) {
-            System.out.println("1 NULL PLAYER HERE:");
             return;
         }
         try {
-            System.out.println("1 PROCEEDING:");
             long mediaId = Long.parseLong(player.getCurrentMediaItem().mediaId);
             if (currentPlayable == null || currentPlayable.getId() != mediaId) {
                 if (mediaLoaderDisposable != null) {
@@ -413,10 +414,7 @@ public class Media3PlaybackService extends MediaLibraryService {
         if (item == null) {
             return;
         }
-        queueLoaderDisposable = Single.fromCallable(() -> {
-            System.out.println("PROCEEDING 2:");
-            // TODO THE ISSUE IS THAT WHEN THE LAST EP IS PLAYED THIS IS TH
-            // ROWING NULL WHICH IT ISN'T ALLOWED TO DO BY DEF.
+        queueLoaderDisposable = Maybe.fromCallable(() -> {
             FeedItem nextItem = DBReader.getNextInQueue(item);
             return nextItem != null && nextItem.getMedia() != null ? nextItem.getMedia() : null;
         })
@@ -435,7 +433,23 @@ public class Media3PlaybackService extends MediaLibraryService {
                                 player.prepare();
                             }
                         },
-                        error -> Log.e(TAG, "Failed to load next queue item", error)
+                        error -> Log.e(TAG, "Failed to load next queue item", error),
+                        () ->  {
+                            stopPlayerAtQueueEnd();
+                            stopSelf();
+                            Log.e(TAG, "End of queue, stopping self and triggering self-destruction");
+                        }
                 );
     }
+    private static void stopPlayerAtQueueEnd() {
+        Log.e(TAG, "Clearing the queue, setting the current feed and media to none, and noting that continuous playback is ending.");
+        DBWriter.clearQueue();
+        DBWriter.setFeedItem(null);
+        DBWriter.setFeedMedia(null);
+        PlaybackPreferences.writeNoMediaPlaying();
+        PlaybackPreferences.setCurrentPlayerStatus(-1);
+        EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
+    }
+
+
 }

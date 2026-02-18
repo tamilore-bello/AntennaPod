@@ -148,16 +148,22 @@ public class ExternalPlayerFragment extends Fragment {
     private void loadMediaInfo() {
         Log.d(TAG, "Loading media info");
 
+
         if (disposable != null) {
             disposable.dispose();
         }
         disposable = Maybe.fromCallable(
-                        () -> DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId()))
+                        () -> {
+                            return DBReader.getFeedMedia(PlaybackPreferences.getCurrentlyPlayingFeedMediaId());
+                        })
+
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(this::updateUi,
                         error -> Log.e(TAG, Log.getStackTraceString(error)),
-                        () -> ((MainActivity) getActivity()).setPlayerVisible(false));
+                        () -> {
+                            ((MainActivity) getActivity()).setPlayerVisible(false);
+                        });
     }
 
     private void updateUi(Playable media) {
