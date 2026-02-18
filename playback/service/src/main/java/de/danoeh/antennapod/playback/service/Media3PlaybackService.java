@@ -441,6 +441,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                         }
                 );
     }
+    
     private static void stopPlayerAtQueueEnd() {
         Log.e(TAG, "Clearing the queue, setting the current feed and media to none, and noting that continuous playback is ending.");
         DBWriter.clearQueue();
@@ -450,6 +451,4 @@ public class Media3PlaybackService extends MediaLibraryService {
         PlaybackPreferences.setCurrentPlayerStatus(-1);
         EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
     }
-
-
 }
