@@ -301,7 +301,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                             }
                             currentPlayable.onPlaybackStart();
                             if (currentPlayable.getItem() != null
-                                        && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
+                                    && !currentPlayable.getItem().isTagged(FeedItem.TAG_QUEUE)) {
                                 DBWriter.addQueueItem(this, currentPlayable.getItem());
                             }
                             float speed = PlaybackSpeedUtils.getCurrentPlaybackSpeed(currentPlayable);
