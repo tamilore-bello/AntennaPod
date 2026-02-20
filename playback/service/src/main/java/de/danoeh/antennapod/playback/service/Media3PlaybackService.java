@@ -311,7 +311,7 @@ public class Media3PlaybackService extends MediaLibraryService {
                             updatePlaybackPreferences();
                             EventBus.getDefault().post(new PlayerStatusEvent());
                         },
-                            error -> Log.e(TAG, "Failed to load current media", error));
+                                error -> Log.e(TAG, "Failed to load current media", error));
 
             }
         } catch (NumberFormatException e) {
@@ -451,7 +451,6 @@ public class Media3PlaybackService extends MediaLibraryService {
                             player.stop();
                             player.clearMediaItems();
                             PlaybackPreferences.writeNoMediaPlaying();
-                            PlaybackPreferences.setCurrentPlayerStatus(-1);
                             EventBus.getDefault().post(new PlaybackServiceEvent(PlaybackServiceEvent.Action.SERVICE_SHUT_DOWN));
                         }
                 );
